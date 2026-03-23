@@ -2,7 +2,7 @@
 
 <!-- Typing Effect GIF (You can generate your own at textanim.com) -->
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=00FF00&center=true&vCenter=true&width=435&lines=Enthusiastic+Software+Engineering;U Can Call me Siddiq;Currently Learning Machine Learning;Nice to Meet cha!" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=00FF00&center=true&vCenter=true&width=435&lines=Enthusiastic+Software+Engineering;U Can Call me Siddiq;Currently+Learning+Machine+Learning;Nice+to+Meet+cha!" alt="Typing SVG" />
 </p>
 
 ---
