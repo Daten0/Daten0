@@ -1,8 +1,8 @@
-
-
+# 🏄 Daten0
 <!-- Typing Effect GIF (You can generate your own at textanim.com) -->
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=00FF00&center=true&vCenter=true&width=435&lines=Enthusiastic+Software+Engineering;U Can Call me Siddiq;Currently+Learning+Machine+Learning;Nice+to+Meet+cha!" alt="Typing SVG" />
+  <!-- <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=00FF00&center=true&vCenter=true&width=435&lines=Enthusiastic+Software+Engineering;U Can Call me Siddiq;Currently+Learning+Machine+Learning;Nice+to+Meet+cha!" alt="Typing SVG" /> -->
+   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=00FF00&center=true&vCenter=true&width=435&lines=Enthusiastic+Software+Engineering;U Can Call me Siddiq;Currently+Learning+Machine+Learning;Nice+to+Meet+cha!" alt="Typing SVG" />
 </p>
 
 ---
@@ -10,7 +10,7 @@
 ### 🚀 About Me
 I'm a Nocturnal guy that likes to make an Open Source Project, also been learning a lots about Machine Learning to know exactly how the things worked under the hood the way Computer Learn on it self. I'm also very passionate on Software Engineering stuff, currently have been dived on BunJS Ecosystem. 
 
-- 🔭 I'm currently working on **a new AI project**
+- 🔭 I'm currently working on **a new Data Mining project**
 - 🌱 I'm currently learning **Python and Machine Learning using Scikit-Learn**
 - 👯 I'm looking to collaborate on **Open Source or a side Projects**
 - 📫 How to reach me: **febrimicrone@gmail.com**
@@ -44,22 +44,22 @@ I'm a Nocturnal guy that likes to make an Open Source Project, also been learnin
   <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Daten0&layout=compact&theme=radical&hide_border=true" height="150" />
 </p>
 
-### 🏆 GitHub Trophies
+<!-- ### 🏆 GitHub Trophies
 <p align="center">
   <img src="https://github-profile-trophy.vercel.app/?username=Daten0&theme=dracula&no-frame=true&no-bg=true&margin-w=4" />
-</p>
+</p> -->
 
 ---
 
 ### 🌐 Connect with Me
 <p align="center">
-  <a href="https://linkedin.com/in/YOUR_LINKEDIN">
+  <a href="https://linkedin.com/in/siddiq-f-5242b52b2">
     <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />
   </a>
-  <a href="https://twitter.com/YOUR_TWITTER">
-    <img src="https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white" />
-  </a>
-  <a href="https://your-portfolio.com">
+  <!-- <a href="https://your-portfolio.com">
     <img src="https://img.shields.io/badge/Portfolio-FF5722?style=for-the-badge&logo=todoist&logoColor=white" />
+  </a> -->
+  <a href="https://www.instagram.com/qiddis02?igsh=MW1yb3Z2ZzllOGJwNw==">
+    <img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" />
   </a>
 </p>
