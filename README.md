@@ -33,6 +33,7 @@ I'm a Nocturnal guy that likes to make an Open Source Project, also been learnin
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Podman](https://img.shields.io/badge/podman-%23000000.svg?style=for-the-badge&logo=podman&logoColor=white)
+![LinuxMint](https://img.shields.io/badge/Linux%20Mint-87CF3E?style=for-the-badge&logo=linux-mint&logoColor=white)
 
 ---
 
