@@ -8,13 +8,13 @@
 ---
 
 ### 🚀 About Me
-I'm a Nocturnal guy that likes to make an Open Source Project, also been learning a lots about Machine Learning to know exactly how the things worked under the hood the way Computer Learn on it self. I'm also very passionate on Software Engineering stuff, currently have been dived on BunJS Ecosystem. 
+I'm a Nocturnal guy that likes to make an Open Source Project, also been learning a Machine Learning to know exactly how the things worked under the hood the way Computer Learn on it self. I'm also very passionate on Software Engineering stuff, currently have been dived on BunJS Ecosystem. 
 
-- 🔭 I'm currently working on **a new Data Mining project**
-- 🌱 I'm currently learning **Python and Machine Learning using Scikit-Learn**
+- 🔭 I'm currently working on **a new Last Project on my campus course**
+- 🌱 I'm currently learning **Networking & Backend**
 - 👯 I'm looking to collaborate on **Open Source or a side Projects**
 - 📫 How to reach me: **febrimicrone@gmail.com**
-- ⚡ Motto: **I'm not sleeping before i solved any bugs in my code.**
+- ⚡ Motto: **IDK Bruv i just got here**
 
 ---
 
