@@ -2,13 +2,13 @@
 <!-- Typing Effect GIF (You can generate your own at textanim.com) -->
 <p align="center">
   <!-- <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=00FF00&center=true&vCenter=true&width=435&lines=Enthusiastic+Software+Engineer;U Can Call me Siddiq;Currently+Learning+Backend+&+Networking;Nice+to+Meet+cha!" alt="Typing SVG" /> -->
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=00FF00&center=true&vCenter=true&width=500&height=50&lines=Enthusiastic+Software+Engineering;U+Can+Call+me+Siddiq;Currently+Learning+Backend+&+Networking;Nice+to+Meet+cha!" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=00FF00&center=true&vCenter=true&width=500&height=50&lines=Enthusiastic+Software+Engineer;U+Can+Call+me+Siddiq;Currently+Learning+Backend+&+Networking;Nice+to+Meet+cha!" alt="Typing SVG" />
 </p>
 
 ---
 
 ### 🚀 About Me
-I'm a Nocturnal guy that likes to make an Open Source Project, also I've tried to learn Rust Lang, for my future projects. I'm also very passionate on Software Engineering stuff, currently have been dived on BunJS Ecosystem. 
+I'm a Nocturnal guy that likes to make an Open Source Project, also been thinking about diving more into a Rust lang for my future projects, that's why I've tried to learn how memory works under the hood 😞. 
 
 - 🔭 I'm currently working on **a new Last Project on my campus course**
 - 🌱 I'm currently learning **Networking & Backend**
