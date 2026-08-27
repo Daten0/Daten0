@@ -8,48 +8,19 @@
 ---
 
 ### 🚀 About Me
-I'm a Nocturnal guy that likes to make an Open Source Project, also been thinking about diving more into a Rust lang for my future projects, that's why I've tried to learn how memory works under the hood 😞. 
 
-- 🔭 I'm currently working on **a new Last Project on my campus course**
-- 🌱 I'm currently learning **Networking & Backend**
-- 👯 I'm looking to collaborate on **Open Source or a side Projects**
 - 📫 How to reach me: **febrimicrone@gmail.com**
-- ⚡ Motto: **IDK Bruv i just got here**
+<!-- CURRENT_PROJECT:START -->
+- 🔭 I'm currently working on **a new Last Project on my campus course**
+<!-- CURRENT_PROJECT:END -->
 
 ---
 
-### 🛠️ Tech Stack
-<!-- Replace these URLs with your preferred icons from devicon.dev -->
-![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
-![ReactJS](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![Scikit-Learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
-![Svelte](https://img.shields.io/badge/svelte-%23f1413d.svg?style=for-the-badge&logo=svelte&logoColor=white)
-![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
-![Bun](https://img.shields.io/badge/bun-%23000000.svg?style=for-the-badge&logo=bun&logoColor=white)
-![HonoJS](https://img.shields.io/badge/hono-%23000000.svg?style=for-the-badge&logo=hono&logoColor=white)
-![Jupyter NoteBook](https://img.shields.io/badge/jupyter-%23FA0F00.svg?style=for-the-badge&logo=jupyter&logoColor=white)
-![MySQL](https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![Podman](https://img.shields.io/badge/podman-%23000000.svg?style=for-the-badge&logo=podman&logoColor=white)
-![LinuxMint](https://img.shields.io/badge/Linux%20Mint-87CF3E?style=for-the-badge&logo=linux-mint&logoColor=white)
+### 🛠️ Recently Used Technologies
 
----
-
-### 📊 GitHub Stats
-<!-- These cards update automatically every 24 hours -->
-<p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=Daten0&show_icons=true&theme=radical&hide_border=true" height="150" />
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Daten0&layout=compact&theme=radical&hide_border=true" height="150" />
-</p>
-
-<!-- ### 🏆 GitHub Trophies
-<p align="center">
-  <img src="https://github-profile-trophy.vercel.app/?username=Daten0&theme=dracula&no-frame=true&no-bg=true&margin-w=4" />
-</p> -->
-
----
+<!-- TECH_STACK:START -->
+Your current badges can remain here temporarily.
+<!-- TECH_STACK:END -->
 
 ### 🌐 Connect with Me
 <p align="center">
@@ -63,3 +34,9 @@ I'm a Nocturnal guy that likes to make an Open Source Project, also been thinkin
     <img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" />
   </a>
 </p>
+
+### ⏱️ Coding Activity
+
+<!-- CODING_TIME:START -->
+No coding activity tracked in the last 7 days.
+<!-- CODING_TIME:END -->
