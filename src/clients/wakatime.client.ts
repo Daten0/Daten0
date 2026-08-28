@@ -1,6 +1,7 @@
 import type {
   CodingActivity,
   LanguageActivity,
+  ProjectActivity,
 } from "../types/activity";
 
 interface WakaTimeLanguage {
@@ -9,21 +10,103 @@ interface WakaTimeLanguage {
   percent: number;
 }
 
+interface WakaTimeProject {
+  name: string;
+  total_seconds: number;
+  percent: number;
+  last_heartbeat_at?: string;
+}
+
 interface WakaTimeStats {
   data: {
     total_seconds: number;
     human_readable_total: string;
     languages: WakaTimeLanguage[];
+    projects?: WakaTimeProject[];
   };
 }
 
+function isWakaTimeLanguage(value: unknown): value is WakaTimeLanguage {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.name === "string" &&
+    typeof v.total_seconds === "number" &&
+    typeof v.percent === "number"
+  );
+}
+
+function isWakaTimeProject(value: unknown): value is WakaTimeProject {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  if (
+    typeof v.name !== "string" ||
+    typeof v.total_seconds !== "number" ||
+    typeof v.percent !== "number"
+  ) {
+    return false;
+  }
+  if (
+    v.last_heartbeat_at !== undefined &&
+    typeof v.last_heartbeat_at !== "string"
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function isWakaTimeStats(value: unknown): value is WakaTimeStats {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  const data = v.data as Record<string, unknown> | undefined;
+  if (typeof data !== "object" || data === null) return false;
+  if (
+    typeof data.total_seconds !== "number" ||
+    typeof data.human_readable_total !== "string" ||
+    !Array.isArray(data.languages) ||
+    !data.languages.every(isWakaTimeLanguage)
+  ) {
+    return false;
+  }
+  if (data.projects !== undefined) {
+    if (!Array.isArray(data.projects)) return false;
+    if (!data.projects.every(isWakaTimeProject)) return false;
+  }
+  return true;
+}
+
+async function readJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    throw new Error("WakaTime response was not valid JSON");
+  }
+}
+
 export class WakaTimeClient {
+  private statsCache: Promise<WakaTimeStats> | null = null;
+
   constructor(
     private readonly apiKey: string,
     private readonly baseUrl = "https://wakatime.com/api/v1",
   ) {}
 
-  async getLast7DaysActivity(): Promise<CodingActivity> {
+  private async fetchStats(): Promise<WakaTimeStats> {
+    if (this.statsCache) {
+      return this.statsCache;
+    }
+
+    this.statsCache = this.requestStats();
+
+    try {
+      return await this.statsCache;
+    } catch (error) {
+      this.statsCache = null;
+      throw error;
+    }
+  }
+
+  private async requestStats(): Promise<WakaTimeStats> {
     const response = await fetch(
       `${this.baseUrl}/users/current/stats/last_7_days`,
       {
@@ -39,7 +122,16 @@ export class WakaTimeClient {
       );
     }
 
-    const body = (await response.json()) as WakaTimeStats;
+    const body = await readJson(response);
+    if (!isWakaTimeStats(body)) {
+      throw new Error("WakaTime response did not match expected schema");
+    }
+
+    return body;
+  }
+
+  async getLast7DaysActivity(): Promise<CodingActivity> {
+    const body = await this.fetchStats();
 
     const languages: LanguageActivity[] = body.data.languages.map(
       (language) => ({
@@ -54,5 +146,19 @@ export class WakaTimeClient {
       text: body.data.human_readable_total,
       languages,
     };
+  }
+
+  async getRecentProjectActivity(): Promise<ProjectActivity[]> {
+    const body = await this.fetchStats();
+
+    const projects = body.data.projects ?? [];
+
+    return projects.map((project) => ({
+      name: project.name,
+      totalSeconds: project.total_seconds,
+      percent: project.percent,
+      lastHeartbeatAt:
+        project.last_heartbeat_at ?? new Date(0).toISOString(),
+    }));
   }
 }

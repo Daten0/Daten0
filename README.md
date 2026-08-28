@@ -11,7 +11,7 @@
 
 - 📫 How to reach me: **febrimicrone@gmail.com**
 <!-- CURRENT_PROJECT:START -->
-- 🔭 I'm currently working on **a new Last Project on my campus course**
+- 🔭 I'm currently between projects.
 <!-- CURRENT_PROJECT:END -->
 
 ---
@@ -19,7 +19,7 @@
 ### 🛠️ Recently Used Technologies
 
 <!-- TECH_STACK:START -->
-Your current badges can remain here temporarily.
+_Recently Used technologies will appear here once activity is tracked._
 <!-- TECH_STACK:END -->
 
 ### 🌐 Connect with Me
