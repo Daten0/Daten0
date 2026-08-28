@@ -27,9 +27,9 @@ export class TechStackService {
     const languageLimit = input.languageLimit ?? 5;
     const frameworkLimit = input.frameworkLimit ?? 8;
 
-    const wakatimeLanguageItems: TechStackItem[] = input.wakatimeLanguages
-      .slice(0, languageLimit)
-      .map((lang) => ({ name: lang.name, source: "wakatime" as const }));
+    const wakatimeLanguageItems: TechStackItem[] = input.wakatimeLanguages.map(
+      (lang) => ({ name: lang.name, source: "wakatime" as const }),
+    );
 
     const githubLanguages = await this.collectGithubLanguages(
       input.recentProjects,
@@ -40,10 +40,11 @@ export class TechStackService {
       input.localRepoPaths,
     );
 
-    const languages = mergeUnique([
-      ...wakatimeLanguageItems,
-      ...githubLanguages,
-    ]).slice(0, languageLimit);
+    const languages = mergeLimited(
+      wakatimeLanguageItems,
+      githubLanguages,
+      languageLimit,
+    );
 
     const frameworks = mergeUnique(manifestFrameworks).slice(
       0,
@@ -121,4 +122,40 @@ function mergeUnique(items: TechStackItem[]): TechStackItem[] {
     result.push(item);
   }
   return result;
+}
+
+/**
+ * Merges WakaTime and GitHub language sources up to `limit` while ensuring
+ * both sources are represented. A share of the limit is reserved for
+ * GitHub-derived languages (otherwise they are silently dropped whenever
+ * WakaTime already fills the limit). If one source under-fills its share,
+ * the other tops up the remaining slots.
+ */
+function mergeLimited(
+  wakatimeItems: TechStackItem[],
+  githubItems: TechStackItem[],
+  limit: number,
+): TechStackItem[] {
+  const githubShare = Math.min(
+    githubItems.length,
+    Math.max(1, Math.floor(limit / 2)),
+  );
+  const wakatimeShare = limit - githubShare;
+
+  const combined = mergeUnique([
+    ...wakatimeItems.slice(0, wakatimeShare),
+    ...githubItems.slice(0, githubShare),
+  ]);
+
+  if (combined.length < limit) {
+    const remaining = limit - combined.length;
+    combined.push(
+      ...mergeUnique([
+        ...wakatimeItems.slice(wakatimeShare),
+        ...githubItems.slice(githubShare),
+      ]).slice(0, remaining),
+    );
+  }
+
+  return combined;
 }

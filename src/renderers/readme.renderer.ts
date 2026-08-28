@@ -19,14 +19,24 @@ export class ReadmeRenderer {
     const endMarker = `<!-- ${section}:END -->`;
 
     const startIndex = readme.indexOf(startMarker);
+    const startLastIndex = readme.lastIndexOf(startMarker);
     const endIndex = readme.indexOf(endMarker);
+    const endLastIndex = readme.lastIndexOf(endMarker);
 
     if (startIndex === -1) {
       throw new Error(`Missing start marker: ${startMarker}`);
     }
 
+    if (startIndex !== startLastIndex) {
+      throw new Error(`Duplicate start marker for section: ${section}`);
+    }
+
     if (endIndex === -1) {
       throw new Error(`Missing end marker: ${endMarker}`);
+    }
+
+    if (endIndex !== endLastIndex) {
+      throw new Error(`Duplicate end marker for section: ${section}`);
     }
 
     if (endIndex <= startIndex) {
@@ -105,7 +115,18 @@ export class ReadmeRenderer {
 function badge(name: string): string {
   const color = colorFor(name);
   const label = encodeURIComponent(name);
-  return `<img src="https://img.shields.io/badge/${label}-${color}?style=for-the-badge&logoColor=white" alt="${name}" />`;
+  const alt = escapeHtmlAttribute(name);
+  return `<img src="https://img.shields.io/badge/${label}-${color}?style=for-the-badge&logoColor=white" alt="${alt}" />`;
+}
+
+/** Escapes a value for use inside a double-quoted HTML attribute. */
+function escapeHtmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function colorFor(name: string): string {

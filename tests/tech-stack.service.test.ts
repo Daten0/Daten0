@@ -128,6 +128,51 @@ describe("TechStackService", () => {
     expect(tsCount).toBe(1);
   });
 
+  test("keeps GitHub languages even when WakaTime already fills the limit", async () => {
+    const github = new MockGitHubClient({
+      "owner/repo-a": ["Go", "Dockerfile"],
+    });
+    const manifestReader = new ManifestReader(new MemoryFs({}));
+    const service = new TechStackService(github, manifestReader);
+
+    const result = await service.build({
+      wakatimeLanguages: makeWakatimeLanguages([
+        "TypeScript", "Rust", "Python", "Java", "C++", "Go",
+      ]),
+      recentProjects: [{ name: "project-a" }],
+      mapping: { "project-a": "owner/repo-a" },
+      localRepoPaths: [],
+    });
+
+    const names = result.languages.map((l) => l.name);
+    expect(names).toHaveLength(5);
+    // Dockerfile only exists on GitHub — it must not be dropped by the limit.
+    expect(names).toContain("Dockerfile");
+    expect(result.languages.some((l) => l.source === "github")).toBe(true);
+  });
+
+  test("top-up: GitHub fills remaining slots when only few WakaTime languages", async () => {
+    const github = new MockGitHubClient({
+      "owner/repo-a": ["Go", "Dockerfile", "Python", "YAML"],
+    });
+    const manifestReader = new ManifestReader(new MemoryFs({}));
+    const service = new TechStackService(github, manifestReader);
+
+    const result = await service.build({
+      wakatimeLanguages: makeWakatimeLanguages(["TypeScript"]),
+      recentProjects: [{ name: "project-a" }],
+      mapping: { "project-a": "owner/repo-a" },
+      localRepoPaths: [],
+    });
+
+    const names = result.languages.map((l) => l.name);
+    expect(names).toHaveLength(5);
+    expect(names).toContain("Go");
+    expect(names).toContain("Dockerfile");
+    expect(names).toContain("Python");
+    expect(names).toContain("YAML");
+  });
+
   test("adds manifest frameworks from local repo paths", async () => {
     const github = new MockGitHubClient();
     const fs = new MemoryFs({

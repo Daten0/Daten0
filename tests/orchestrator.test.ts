@@ -185,4 +185,65 @@ describe("orchestrator failure handling", () => {
 
     expect(updatedReadme).toBe(emptyReadme);
   });
+
+  test("missing marker: section fails without corrupting the README", async () => {
+    const readmeMissingMarker = `# Profile
+
+Before
+
+<!-- CODING_TIME:START -->
+Last 7 Days: 5 hrs 12 mins
+<!-- CODING_TIME:END -->
+
+Middle
+
+<!-- TECH_STACK:START -->
+**Languages (Recently Used)**
+![TypeScript](https://img.shields.io/badge/TypeScript-000000)
+<!-- TECH_STACK:END -->
+
+After
+`;
+    const deps = makeDeps(makeSuccessWakatime());
+
+    const { updatedReadme, results } = await runOrchestrator(
+      readmeMissingMarker,
+      deps,
+    );
+
+    const currentProjectResult = results.find(
+      (r) => r.section === "CURRENT_PROJECT",
+    );
+    expect(currentProjectResult?.ok).toBe(false);
+    expect(currentProjectResult?.error).toMatch(/Missing start marker/);
+
+    // The failing section never gets content injected, while the other two
+    // sections still update (no full-file bail-out).
+    expect(updatedReadme).toContain("**Last 7 Days:** 1 hr 0 mins");
+    expect(updatedReadme).toContain("img.shields.io");
+    expect(updatedReadme).not.toContain("I'm currently working on");
+  });
+
+  test("duplicate marker: section fails without corrupting the README", async () => {
+    const duplicatedReadme = `# Profile
+
+<!-- CODING_TIME:START -->
+Last 7 Days: 5 hrs 12 mins
+<!-- CODING_TIME:END -->
+<!-- CODING_TIME:START -->
+duplicate block
+<!-- CODING_TIME:END -->
+`;
+    const deps = makeDeps(makeSuccessWakatime());
+
+    const { updatedReadme, results } = await runOrchestrator(
+      duplicatedReadme,
+      deps,
+    );
+
+    const codingTimeResult = results.find((r) => r.section === "CODING_TIME");
+    expect(codingTimeResult?.ok).toBe(false);
+    expect(codingTimeResult?.error).toMatch(/Duplicate start marker/);
+    expect(updatedReadme).toBe(duplicatedReadme);
+  });
 });

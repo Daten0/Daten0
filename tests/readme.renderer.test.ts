@@ -82,6 +82,34 @@ content
     ).toThrow("Invalid marker order");
   });
 
+  test("throws when the start marker appears more than once", () => {
+    const readme = `
+<!-- CODING_TIME:START -->
+first block
+<!-- CODING_TIME:END -->
+<!-- CODING_TIME:START -->
+second block
+<!-- CODING_TIME:END -->
+`;
+
+    expect(() =>
+      renderer.replaceSection(readme, "CODING_TIME", "Rust"),
+    ).toThrow("Duplicate start marker");
+  });
+
+  test("throws when the end marker appears more than once", () => {
+    const readme = `
+<!-- CODING_TIME:START -->
+content
+<!-- CODING_TIME:END -->
+<!-- CODING_TIME:END -->
+`;
+
+    expect(() =>
+      renderer.replaceSection(readme, "CODING_TIME", "Rust"),
+    ).toThrow("Duplicate end marker");
+  });
+
   describe("renderCodingTime", () => {
     test("renders coding time with languages", () => {
       const summary: CodingTimeSummary = {
@@ -290,6 +318,17 @@ content
       expect(result).toMatch(
         /img\.shields\.io\/badge\/TypeScript-[A-F0-9]{6}\?style=for-the-badge/,
       );
+    });
+
+    test("escapes HTML special characters in badge alt attribute", () => {
+      const result = renderer.renderTechStack({
+        languages: [{ name: `C"<script>`, source: "wakatime" }],
+        frameworks: [],
+        hasData: true,
+      });
+
+      expect(result).toContain('alt="C&quot;&lt;script&gt;"');
+      expect(result).not.toContain(`alt="C"<script>"`);
     });
 
     test("does not render languages section when empty", () => {
