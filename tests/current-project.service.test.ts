@@ -66,9 +66,9 @@ describe("CurrentProjectService", () => {
     ];
 
     const result = service.selectMostRecent(projects);
-    // Both timestamps are 0; the comparator keeps original order for stability.
-    expect(result).not.toBeNull();
-    expect(typeof result?.name).toBe("string");
+    // Both timestamps are 0; the comparator returns 0 and the stable sort
+    // keeps the first element in place.
+    expect(result?.name).toBe("first");
   });
 
   test("build returns null when no projects exist", async () => {

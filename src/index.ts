@@ -6,6 +6,7 @@ import { CodingTimeService } from "./services/coding-time.service";
 import { CurrentProjectService } from "./services/current-project.service";
 import { TechStackService } from "./services/tech-stack.service";
 import { ReadmeRenderer } from "./renderers/readme.renderer";
+import { runOrchestrator } from "./orchestrator";
 
 const wakatime = new WakaTimeClient(
   config.wakatime.apiKey,
@@ -24,69 +25,17 @@ const currentProjectService = new CurrentProjectService(github);
 const techStackService = new TechStackService(github, manifestReader);
 const renderer = new ReadmeRenderer();
 
-const readmeFile = Bun.file("README.md");
-const readme = await readmeFile.text();
+const readme = await Bun.file("README.md").text();
 
-const results: { section: string; ok: boolean; error?: string }[] = [];
-let updatedReadme = readme;
-
-try {
-  const activity = await wakatime.getLast7DaysActivity();
-  const summary = codingTimeService.summarize(activity);
-  const markdown = renderer.renderCodingTime(summary);
-  updatedReadme = renderer.replaceSection(
-    updatedReadme,
-    "CODING_TIME",
-    markdown,
-  );
-  results.push({ section: "CODING_TIME", ok: true });
-} catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  results.push({ section: "CODING_TIME", ok: false, error: message });
-}
-
-try {
-  const projects = await wakatime.getRecentProjectActivity();
-  const current = await currentProjectService.build(
-    projects,
-    config.currentProject.mapping,
-  );
-  const markdown = renderer.renderCurrentProject(current);
-  updatedReadme = renderer.replaceSection(
-    updatedReadme,
-    "CURRENT_PROJECT",
-    markdown,
-  );
-  results.push({ section: "CURRENT_PROJECT", ok: true });
-} catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  results.push({ section: "CURRENT_PROJECT", ok: false, error: message });
-}
-
-try {
-  const [activity, projects] = await Promise.all([
-    wakatime.getLast7DaysActivity(),
-    wakatime.getRecentProjectActivity(),
-  ]);
-
-  const stack = await techStackService.build({
-    wakatimeLanguages: activity.languages,
-    recentProjects: projects,
-    mapping: config.currentProject.mapping,
-    localRepoPaths: config.techStack.localRepoPaths,
-  });
-
-  const markdown = renderer.renderTechStack(stack);
-  updatedReadme = renderer.replaceSection(
-    updatedReadme,
-    "TECH_STACK",
-    markdown,
-  );
-  results.push({ section: "TECH_STACK", ok: true });
-} catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  results.push({ section: "TECH_STACK", ok: false, error: message });
-}
+const { updatedReadme, results } = await runOrchestrator(readme, {
+  wakatime,
+  currentProjectService,
+  techStackService,
+  codingTimeService,
+  renderer,
+  mapping: config.currentProject.mapping,
+  localRepoPaths: config.techStack.localRepoPaths,
+});
 
 if (updatedReadme !== readme) {
   await Bun.write("README.md", updatedReadme);
