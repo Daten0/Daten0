@@ -51,6 +51,22 @@ describe("GitHubClient", () => {
     });
   });
 
+  test("throws a clear error when the request times out", async () => {
+    globalThis.fetch = mock(async (_input: string | URL, init?: RequestInit) => {
+      await new Promise((_, reject) => {
+        init?.signal?.addEventListener("abort", () =>
+          reject(new Error("Aborted")),
+        );
+      });
+    }) as unknown as typeof fetch;
+
+    const client = new GitHubClient("test-token", undefined, 20);
+
+    await expect(
+      client.getRepository("octocat", "Hello-World"),
+    ).rejects.toThrow("GitHub request timed out after 20ms");
+  });
+
   test("includes Authorization header when token is provided", async () => {
     let capturedHeaders: RequestInit["headers"];
 

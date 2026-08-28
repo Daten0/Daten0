@@ -71,6 +71,22 @@ describe("WakaTimeClient", () => {
     );
   });
 
+  test("throws a clear error when the request times out", async () => {
+    globalThis.fetch = mock(async (_input: string | URL, init?: RequestInit) => {
+      await new Promise((_, reject) => {
+        init?.signal?.addEventListener("abort", () =>
+          reject(new Error("Aborted")),
+        );
+      });
+    }) as unknown as typeof fetch;
+
+    const client = new WakaTimeClient("test-key", undefined, 20);
+
+    await expect(client.getLast7DaysActivity()).rejects.toThrow(
+      "WakaTime request timed out after 20ms",
+    );
+  });
+
   test("throws on invalid JSON response", async () => {
     globalThis.fetch = mock(async () => mockResponse(200, "not-json{")) as unknown as typeof fetch;
 

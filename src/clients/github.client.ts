@@ -39,7 +39,25 @@ export class GitHubClient {
   constructor(
     private readonly token: string | null = null,
     private readonly baseUrl = "https://api.github.com",
+    private readonly timeoutMs = 10_000,
   ) {}
+
+  private async request(url: string, init?: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new Error(
+          `GitHub request timed out after ${this.timeoutMs}ms`,
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
   private buildHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
@@ -61,7 +79,7 @@ export class GitHubClient {
   }
 
   async getRepository(owner: string, repo: string): Promise<GitHubRepo> {
-    const response = await fetch(
+    const response = await this.request(
       `${this.baseUrl}/repos/${owner}/${repo}`,
       { headers: this.buildHeaders() },
     );
@@ -94,7 +112,7 @@ export class GitHubClient {
     owner: string,
     repo: string,
   ): Promise<string[]> {
-    const response = await fetch(
+    const response = await this.request(
       `${this.baseUrl}/repos/${owner}/${repo}/languages`,
       { headers: this.buildHeaders() },
     );

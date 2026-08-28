@@ -89,7 +89,25 @@ export class WakaTimeClient {
   constructor(
     private readonly apiKey: string,
     private readonly baseUrl = "https://wakatime.com/api/v1",
+    private readonly timeoutMs = 10_000,
   ) {}
+
+  private async request(url: string, init?: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new Error(
+          `WakaTime request timed out after ${this.timeoutMs}ms`,
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
   private async fetchStats(): Promise<WakaTimeStats> {
     if (this.statsCache) {
@@ -107,7 +125,7 @@ export class WakaTimeClient {
   }
 
   private async requestStats(): Promise<WakaTimeStats> {
-    const response = await fetch(
+    const response = await this.request(
       `${this.baseUrl}/users/current/stats/last_7_days`,
       {
         headers: {
