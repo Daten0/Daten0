@@ -42,7 +42,7 @@ Without this, `GitHubClient` makes anonymous API requests (60/hour limit). With 
 
 ### `CURRENT_PROJECT_MAPPING` — link WakaTime projects to GitHub repos
 
-Maps your WakaTime project names to GitHub `owner/repo` slugs. Used by the `CURRENT_PROJECT` section to render a link and description.
+Allowlists public WakaTime project names and maps them to GitHub `owner/repo` slugs. The `CURRENT_PROJECT` section never publishes unmapped project names.
 
 1. Add a new secret named `CURRENT_PROJECT_MAPPING`
 2. **Value:** valid JSON object, e.g.

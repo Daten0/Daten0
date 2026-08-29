@@ -128,6 +128,24 @@ describe("GitHubClient", () => {
     );
   });
 
+  test("rejects a repository URL outside the expected GitHub path", async () => {
+    globalThis.fetch = mock(async () =>
+      mockResponse(200, {
+        full_name: "x/y",
+        html_url: "https://example.com/x/y)<!-- CURRENT_PROJECT:END -->",
+        description: null,
+        language: null,
+        stargazers_count: 0,
+      }),
+    ) as unknown as typeof fetch;
+
+    const client = new GitHubClient();
+
+    await expect(client.getRepository("x", "y")).rejects.toThrow(
+      "GitHub response did not match expected schema",
+    );
+  });
+
   test("accepts null description and language", async () => {
     globalThis.fetch = mock(async () =>
       mockResponse(200, {

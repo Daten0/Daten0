@@ -6,6 +6,7 @@ import type { CurrentProjectService } from "./services/current-project.service";
 import type { TechStackService } from "./services/tech-stack.service";
 import type { ReadmeRenderer } from "./renderers/readme.renderer";
 import type { ProjectRepoMapping } from "./services/current-project.service";
+import { filterRecentProjects } from "./services/current-project.service";
 
 export interface SectionResult {
   section: string;
@@ -21,6 +22,7 @@ export interface OrchestratorDeps {
   renderer: ReadmeRenderer;
   mapping: ProjectRepoMapping;
   localRepoPaths: string[];
+  now?: () => number;
 }
 
 export interface OrchestratorOutput {
@@ -34,6 +36,7 @@ export async function runOrchestrator(
 ): Promise<OrchestratorOutput> {
   const results: SectionResult[] = [];
   let updatedReadme = readme;
+  const nowMs = deps.now?.() ?? Date.now();
 
   try {
     const activity = await deps.wakatime.getLast7DaysActivity();
@@ -54,7 +57,10 @@ export async function runOrchestrator(
   }
 
   try {
-    const projects = await deps.wakatime.getRecentProjectActivity();
+    const projects = filterRecentProjects(
+      await deps.wakatime.getRecentProjectActivity(),
+      nowMs,
+    );
     const current = await deps.currentProjectService.build(
       projects,
       deps.mapping,
@@ -75,10 +81,11 @@ export async function runOrchestrator(
   }
 
   try {
-    const [activity, projects] = await Promise.all([
+    const [activity, allProjects] = await Promise.all([
       deps.wakatime.getLast7DaysActivity(),
       deps.wakatime.getRecentProjectActivity(),
     ]);
+    const projects = filterRecentProjects(allProjects, nowMs);
 
     const stack = await deps.techStackService.build({
       wakatimeLanguages: activity.languages,

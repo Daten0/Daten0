@@ -4,7 +4,7 @@ Step-by-step guide to run the system on your local machine.
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) installed (v1.0+). Verify with `bun --version`.
+- [Bun](https://bun.sh) 1.4.0 installed. Verify with `bun --version`.
 - A [WakaTime](https://wakatime.com) account with at least one project tracked.
 - (Optional) Local clones of your GitHub repos for tech stack detection.
 

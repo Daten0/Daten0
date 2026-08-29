@@ -1,3 +1,5 @@
+import { parseRepoSlug } from "./services/project-mapping";
+
 function requireEnv(name: string): string {
   const value = Bun.env[name];
 
@@ -66,6 +68,11 @@ function readMapping(): Record<string, string> {
     if (typeof value !== "string") {
       throw new Error(
         `Invalid CURRENT_PROJECT_MAPPING: value for "${key}" must be a string`,
+      );
+    }
+    if (!parseRepoSlug(value)) {
+      throw new Error(
+        `Invalid CURRENT_PROJECT_MAPPING: value for "${key}" must be an owner/repo slug`,
       );
     }
     result[key] = value;

@@ -18,8 +18,6 @@ export interface CodingTimeSummary {
 
 export interface ProjectActivity {
   name: string;
-  totalSeconds: number;
-  percent: number;
   lastHeartbeatAt: string;
 }
 
@@ -34,7 +32,6 @@ export interface GitHubRepo {
 export interface CurrentProject {
   name: string;
   lastHeartbeatAt: string;
-  totalSeconds: number;
   repository: GitHubRepo | null;
 }
 

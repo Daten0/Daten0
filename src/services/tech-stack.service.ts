@@ -5,8 +5,10 @@ import type {
   TechStack,
   TechStackItem,
 } from "../types/activity";
-
-export type ProjectRepoMapping = Record<string, string>;
+import {
+  parseRepoSlug,
+  type ProjectRepoMapping,
+} from "./project-mapping";
 
 export interface TechStackBuildInput {
   wakatimeLanguages: LanguageActivity[];
@@ -66,10 +68,9 @@ export class TechStackService {
     const seen = new Set<string>();
 
     for (const project of projects) {
-      const slug = mapping[project.name];
+      const slug = parseRepoSlug(mapping[project.name]);
       if (!slug) continue;
-      const [owner, repo] = slug.split("/");
-      if (!owner || !repo) continue;
+      const [owner, repo] = slug;
 
       try {
         const languages = await this.github.getRepositoryLanguages(
@@ -117,8 +118,9 @@ function mergeUnique(items: TechStackItem[]): TechStackItem[] {
   const seen = new Set<string>();
   const result: TechStackItem[] = [];
   for (const item of items) {
-    if (seen.has(item.name)) continue;
-    seen.add(item.name);
+    const key = item.name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
     result.push(item);
   }
   return result;
@@ -136,26 +138,35 @@ function mergeLimited(
   githubItems: TechStackItem[],
   limit: number,
 ): TechStackItem[] {
+  if (limit <= 0) return [];
+
   const githubShare = Math.min(
     githubItems.length,
     Math.max(1, Math.floor(limit / 2)),
   );
   const wakatimeShare = limit - githubShare;
 
-  const combined = mergeUnique([
-    ...wakatimeItems.slice(0, wakatimeShare),
-    ...githubItems.slice(0, githubShare),
-  ]);
+  const result: TechStackItem[] = [];
+  const seen = new Set<string>();
+  const append = (items: TechStackItem[]) => {
+    for (const item of items) {
+      if (result.length === limit) return;
+      const key = item.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(item);
+    }
+  };
 
-  if (combined.length < limit) {
-    const remaining = limit - combined.length;
-    combined.push(
-      ...mergeUnique([
-        ...wakatimeItems.slice(wakatimeShare),
-        ...githubItems.slice(githubShare),
-      ]).slice(0, remaining),
-    );
+  append(wakatimeItems.slice(0, wakatimeShare));
+  append(githubItems.slice(0, githubShare));
+
+  if (result.length < limit) {
+    append([
+      ...wakatimeItems.slice(wakatimeShare),
+      ...githubItems.slice(githubShare),
+    ]);
   }
 
-  return combined;
+  return result;
 }

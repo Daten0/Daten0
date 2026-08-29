@@ -23,6 +23,7 @@ src/
 ├── services/                # Business logic
 │   ├── coding-time.service.ts     # Sorts + limits language stats
 │   ├── current-project.service.ts # Selects most recent project + GitHub enrichment
+│   ├── project-mapping.ts         # Validates GitHub owner/repo mappings
 │   └── tech-stack.service.ts      # Aggregates languages from WakaTime + GitHub, tools from manifests
 ├── renderers/               # Data → Markdown
 │   └── readme.renderer.ts   # Three render methods + section replacement
@@ -46,7 +47,7 @@ This makes the system easy to test (no real APIs needed) and easy to reason abou
 
 ### CODING_TIME
 
-1. `WakaTimeClient.getLast7DaysActivity()` → fetches `stats/last_7_days` endpoint
+1. `WakaTimeClient.getLast7DaysActivity()` → fetches `stats/last_7_days`, retries responses that are still calculating, and rejects incomplete statistics
 2. `CodingTimeService.summarize(activity)` → sorts languages by `totalSeconds` descending, keeps top 5
 3. `ReadmeRenderer.renderCodingTime(summary)` → builds Markdown like:
 
@@ -62,8 +63,8 @@ This makes the system easy to test (no real APIs needed) and easy to reason abou
 
 ### CURRENT_PROJECT
 
-1. `WakaTimeClient.getRecentProjectActivity()` → fetches `stats/last_7_days` and extracts the `projects` array
-2. `CurrentProjectService.build(projects, mapping)` → picks the project with the most recent heartbeat; if a mapping entry exists, enriches via `GitHubClient.getRepository(owner, repo)`
+1. `WakaTimeClient.getRecentProjectActivity()` → fetches the `projects` endpoint, which supplies real `last_heartbeat_at` timestamps
+2. `CurrentProjectService.build(projects, mapping)` → considers only explicitly mapped projects, picks the mapped project with the most recent heartbeat, and enriches it via `GitHubClient.getRepository(owner, repo)`
 3. `ReadmeRenderer.renderCurrentProject(project)` → builds Markdown like:
 
    ```markdown
@@ -102,13 +103,14 @@ This section combines three data sources:
 
 ## Memoization
 
-`WakaTimeClient.fetchStats()` is private and memoized:
+WakaTime statistics and projects are fetched from separate endpoints and cached independently:
 
 ```ts
 private statsCache: Promise<WakaTimeStats> | null = null;
+private projectsCache: Promise<WakaTimeProjects> | null = null;
 ```
 
-The first call hits the WakaTime API; subsequent calls return the cached promise. This means `getLast7DaysActivity()` and `getRecentProjectActivity()` share one HTTP request. If the request fails, the cache is cleared so a retry works.
+The first call to each endpoint hits the WakaTime API; subsequent calls return the corresponding cached promise. If a request fails, its cache is cleared so a later section can retry. Stats responses that are stale or still calculating receive bounded retries before the section fails safely.
 
 ## Partial-fail design
 

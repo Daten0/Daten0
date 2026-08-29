@@ -167,6 +167,33 @@ describe("orchestrator failure handling", () => {
     expect(results.every((r) => r.ok)).toBe(true);
   });
 
+  test("uses one injected clock to filter projects for both sections", async () => {
+    const wakatime = makeSuccessWakatime();
+    wakatime.getRecentProjectActivity = async () => [
+      { name: "recent", lastHeartbeatAt: "2024-01-07T00:00:00.000Z" },
+      { name: "stale", lastHeartbeatAt: "2023-12-31T23:59:59.999Z" },
+      { name: "future", lastHeartbeatAt: "2024-01-08T00:00:00.001Z" },
+    ];
+    const deps = makeDeps(wakatime);
+    const received: string[][] = [];
+
+    deps.currentProjectService.build = async (projects) => {
+      received.push(projects.map((project) => project.name));
+      return null;
+    };
+    deps.techStackService.build = async (input) => {
+      received.push(input.recentProjects.map((project) => project.name));
+      return { languages: [], frameworks: [], hasData: false };
+    };
+
+    await runOrchestrator(SAMPLE_README, {
+      ...deps,
+      now: () => Date.parse("2024-01-08T00:00:00.000Z"),
+    });
+
+    expect(received).toEqual([["recent"], ["recent"]]);
+  });
+
   test("first-ever run when all APIs down: markers remain, no content injected", async () => {
     const emptyReadme = `# Profile
 

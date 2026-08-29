@@ -15,7 +15,7 @@ Without `WAKATIME_API_KEY`, the `Update README` workflow will fail at the script
 | Secret | Purpose | Default behavior |
 |--------|---------|------------------|
 | `GITHUB_TOKEN` | Used by the application (`GitHubClient`) to call the GitHub API with a higher rate limit when enriching the current project with repository metadata. | Anonymous requests (60 req/hour per IP). The `Update README` workflow will still work; the tech stack section will fall back to WakaTime-only data. |
-| `CURRENT_PROJECT_MAPPING` | JSON object mapping WakaTime project names to GitHub `owner/repo` slugs. Example: `{"my-app":"me/my-app"}`. | Empty — current project renders as plain text without a link. |
+| `CURRENT_PROJECT_MAPPING` | JSON object allowlisting public WakaTime project names and mapping them to GitHub `owner/repo` slugs. Example: `{"my-app":"me/my-app"}`. | Empty — no WakaTime project names are published. |
 | `LOCAL_REPOS_PATHS` | JSON array of absolute paths to local clones of your repositories. Example: `["/home/user/repos/repo1","/home/user/repos/repo2"]`. These are read by `ManifestReader` to detect frameworks and tools. | Empty — only WakaTime + GitHub languages contribute to the tech stack. |
 
 > **Note:** There are two distinct `GITHUB_TOKEN` values in this project:
@@ -33,6 +33,8 @@ Without `WAKATIME_API_KEY`, the `Update README` workflow will fail at the script
 5. Paste the value and save.
 
 For multi-value secrets (`CURRENT_PROJECT_MAPPING`, `LOCAL_REPOS_PATHS`), the value must be valid JSON. Use a JSON linter to verify before saving.
+
+Only add projects to `CURRENT_PROJECT_MAPPING` when their names are safe to publish. Unmapped WakaTime projects are deliberately excluded from the public README.
 
 ## Rotating the WakaTime API key
 

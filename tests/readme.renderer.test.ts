@@ -171,6 +171,22 @@ content
       expect(result).toContain("- **Java** — 66.7%");
     });
 
+    test("escapes external language names and coding-time text", () => {
+      const result = renderer.renderCodingTime({
+        totalSeconds: 60,
+        text: "1 min\n<!-- CODING_TIME:END -->",
+        languages: [{
+          name: "[Type](bad)<!-- TECH_STACK:END -->",
+          totalSeconds: 60,
+          percentage: 100,
+        }],
+      });
+
+      expect(result).not.toContain("<!-- CODING_TIME:END -->");
+      expect(result).not.toContain("<!-- TECH_STACK:END -->");
+      expect(result).toContain("&lt;!-- CODING\\_TIME:END --&gt;");
+    });
+
     test("renders all languages provided in summary", () => {
       const summary: CodingTimeSummary = {
         totalSeconds: 5000,
@@ -203,7 +219,6 @@ content
       const result = renderer.renderCurrentProject({
         name: "my-app",
         lastHeartbeatAt: "2024-01-01T00:00:00.000Z",
-        totalSeconds: 3600,
         repository: null,
       });
 
@@ -216,7 +231,6 @@ content
       const result = renderer.renderCurrentProject({
         name: "my-app",
         lastHeartbeatAt: "2024-01-01T00:00:00.000Z",
-        totalSeconds: 3600,
         repository: {
           fullName: "me/my-app",
           htmlUrl: "https://github.com/me/my-app",
@@ -235,7 +249,6 @@ content
       const result = renderer.renderCurrentProject({
         name: "my-app",
         lastHeartbeatAt: "2024-01-01T00:00:00.000Z",
-        totalSeconds: 3600,
         repository: {
           fullName: "me/my-app",
           htmlUrl: "https://github.com/me/my-app",
@@ -249,6 +262,25 @@ content
         "- 🔭 I'm currently working on [**my-app**](https://github.com/me/my-app)",
       );
       expect(result).not.toContain(" — ");
+    });
+
+    test("normalizes and escapes external project text", () => {
+      const result = renderer.renderCurrentProject({
+        name: "[private](bad)\n<!-- CURRENT_PROJECT:END -->",
+        lastHeartbeatAt: "2024-01-01T00:00:00.000Z",
+        repository: {
+          fullName: "me/public",
+          htmlUrl: "https://github.com/me/public",
+          description: "line one\n**line two**",
+          language: "TypeScript",
+          starCount: 0,
+        },
+      });
+
+      expect(result).not.toContain("<!-- CURRENT_PROJECT:END -->");
+      expect(result).not.toContain("\n");
+      expect(result).toContain("\\[private\\]\\(bad\\)");
+      expect(result).toContain("\\*\\*line two\\*\\*");
     });
   });
 

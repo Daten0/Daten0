@@ -15,7 +15,24 @@ describe("WakaTimeClient", () => {
     options: { ok?: boolean } = {},
   ): Response {
     const isJson = typeof body === "object";
-    const text = typeof body === "string" ? body : JSON.stringify(body);
+    let normalizedBody = body;
+    if (isJson && "data" in body) {
+      const data = body.data;
+      if (typeof data === "object" && data !== null && !Array.isArray(data)) {
+        normalizedBody = {
+          ...body,
+          data: {
+            is_up_to_date: true,
+            percent_calculated: 100,
+            status: "ok",
+            ...data,
+          },
+        };
+      }
+    }
+    const text = typeof normalizedBody === "string"
+      ? normalizedBody
+      : JSON.stringify(normalizedBody);
     return new Response(text, {
       status,
       headers: { "Content-Type": isJson ? "application/json" : "text/plain" },
@@ -165,54 +182,97 @@ describe("WakaTimeClient", () => {
     );
   });
 
+  test("retries a stale stats response until it is current", async () => {
+    let fetchCount = 0;
+    globalThis.fetch = mock(async () => {
+      fetchCount++;
+      return mockResponse(200, {
+        data: {
+          total_seconds: 100,
+          human_readable_total: "1 min 40 secs",
+          languages: [],
+          is_up_to_date: fetchCount > 1,
+          percent_calculated: fetchCount > 1 ? 100 : 60,
+        },
+      });
+    }) as unknown as typeof fetch;
+
+    const client = new WakaTimeClient("test-key", undefined, 10_000, 0);
+    const activity = await client.getLast7DaysActivity();
+
+    expect(activity.totalSeconds).toBe(100);
+    expect(fetchCount).toBe(2);
+  });
+
+  test("rejects stats that remain incomplete", async () => {
+    globalThis.fetch = mock(async () =>
+      mockResponse(200, {
+        data: {
+          total_seconds: 100,
+          human_readable_total: "1 min 40 secs",
+          languages: [],
+          is_up_to_date: false,
+          percent_calculated: 60,
+        },
+      }),
+    ) as unknown as typeof fetch;
+
+    const client = new WakaTimeClient("test-key", undefined, 10_000, 0);
+
+    await expect(client.getLast7DaysActivity()).rejects.toThrow(
+      "WakaTime stats are incomplete: 60% calculated",
+    );
+  });
+
+  test("retries 202 responses and fails clearly when processing continues", async () => {
+    let fetchCount = 0;
+    globalThis.fetch = mock(async () => {
+      fetchCount++;
+      return mockResponse(202, {});
+    }) as unknown as typeof fetch;
+
+    const client = new WakaTimeClient("test-key", undefined, 10_000, 0);
+
+    await expect(client.getLast7DaysActivity()).rejects.toThrow(
+      "WakaTime stats are still being calculated",
+    );
+    expect(fetchCount).toBe(3);
+  });
+
   describe("getRecentProjectActivity", () => {
-    test("returns mapped ProjectActivity list from stats endpoint", async () => {
-      globalThis.fetch = mock(async () =>
-        mockResponse(200, {
-          data: {
-            total_seconds: 9000,
-            human_readable_total: "2 hrs 30 mins",
-            languages: [],
-            projects: [
-              {
-                name: "my-app",
-                total_seconds: 7200,
-                percent: 80,
-                last_heartbeat_at: "2024-01-05T10:00:00Z",
-              },
-              {
-                name: "other",
-                total_seconds: 1800,
-                percent: 20,
-                last_heartbeat_at: "2024-01-04T10:00:00Z",
-              },
-            ],
-          },
-        }),
-      ) as unknown as typeof fetch;
+    test("returns project recency from the projects endpoint", async () => {
+      let capturedUrl: string | undefined;
+      globalThis.fetch = mock(async (input: string | URL) => {
+        capturedUrl = String(input);
+        return mockResponse(200, {
+          data: [
+            {
+              name: "my-app",
+              last_heartbeat_at: "2024-01-05T10:00:00Z",
+            },
+            {
+              name: "other",
+              last_heartbeat_at: "2024-01-04T10:00:00Z",
+            },
+          ],
+        });
+      }) as unknown as typeof fetch;
 
       const client = new WakaTimeClient("test-key");
       const projects = await client.getRecentProjectActivity();
 
+      expect(capturedUrl).toBe(
+        "https://wakatime.com/api/v1/users/current/projects",
+      );
       expect(projects).toHaveLength(2);
       expect(projects[0]).toEqual({
         name: "my-app",
-        totalSeconds: 7200,
-        percent: 80,
         lastHeartbeatAt: "2024-01-05T10:00:00Z",
       });
     });
 
-    test("returns empty array when no projects field is present", async () => {
-      globalThis.fetch = mock(async () =>
-        mockResponse(200, {
-          data: {
-            total_seconds: 0,
-            human_readable_total: "0 secs",
-            languages: [],
-          },
-        }),
-      ) as unknown as typeof fetch;
+    test("returns an empty array when no projects exist", async () => {
+      globalThis.fetch = mock(async () => mockResponse(200, { data: [] })) as unknown as typeof fetch;
 
       const client = new WakaTimeClient("test-key");
       const projects = await client.getRecentProjectActivity();
@@ -220,24 +280,18 @@ describe("WakaTimeClient", () => {
       expect(projects).toEqual([]);
     });
 
-    test("uses epoch zero when last_heartbeat_at is missing", async () => {
+    test("rejects a project without last_heartbeat_at", async () => {
       globalThis.fetch = mock(async () =>
         mockResponse(200, {
-          data: {
-            total_seconds: 100,
-            human_readable_total: "1 min 40 secs",
-            languages: [],
-            projects: [
-              { name: "x", total_seconds: 100, percent: 100 },
-            ],
-          },
+          data: [{ name: "x" }],
         }),
       ) as unknown as typeof fetch;
 
       const client = new WakaTimeClient("test-key");
-      const projects = await client.getRecentProjectActivity();
 
-      expect(projects[0]?.lastHeartbeatAt).toBe(new Date(0).toISOString());
+      await expect(client.getRecentProjectActivity()).rejects.toThrow(
+        "WakaTime projects response did not match expected schema",
+      );
     });
 
     test("throws on non-2xx response", async () => {
@@ -245,7 +299,7 @@ describe("WakaTimeClient", () => {
 
       const client = new WakaTimeClient("test-key");
 
-      expect(() => client.getRecentProjectActivity()).toThrow(
+      await expect(client.getRecentProjectActivity()).rejects.toThrow(
         "WakaTime request failed: 403",
       );
     });
@@ -255,52 +309,45 @@ describe("WakaTimeClient", () => {
 
       const client = new WakaTimeClient("test-key");
 
-      expect(() => client.getRecentProjectActivity()).toThrow(
+      await expect(client.getRecentProjectActivity()).rejects.toThrow(
         "WakaTime response was not valid JSON",
       );
     });
 
-    test("throws when project entry is malformed", async () => {
+    test("rejects a malformed heartbeat timestamp", async () => {
       globalThis.fetch = mock(async () =>
         mockResponse(200, {
-          data: {
-            total_seconds: 100,
-            human_readable_total: "1 min 40 secs",
-            languages: [],
-            projects: [{ name: "x", total_seconds: "not-a-number", percent: 100 }],
-          },
+          data: [{ name: "x", last_heartbeat_at: "not-a-date" }],
         }),
       ) as unknown as typeof fetch;
 
       const client = new WakaTimeClient("test-key");
 
-      expect(() => client.getRecentProjectActivity()).toThrow(
-        "WakaTime response did not match expected schema",
+      await expect(client.getRecentProjectActivity()).rejects.toThrow(
+        "WakaTime projects response did not match expected schema",
       );
     });
 
-    test("makes only one API request when both methods are called", async () => {
+    test("caches projects separately from stats", async () => {
       let fetchCount = 0;
 
-      globalThis.fetch = mock(async () => {
+      globalThis.fetch = mock(async (input: string | URL) => {
         fetchCount++;
-        return mockResponse(200, {
-          data: {
-            total_seconds: 9000,
-            human_readable_total: "2 hrs 30 mins",
-            languages: [
-              { name: "TypeScript", total_seconds: 9000, percent: 100 },
-            ],
-            projects: [
-              {
-                name: "my-app",
-                total_seconds: 9000,
-                percent: 100,
-                last_heartbeat_at: "2024-01-05T10:00:00Z",
-              },
-            ],
-          },
-        });
+        if (String(input).endsWith("/projects")) {
+          return mockResponse(200, {
+            data: [{
+              name: "my-app",
+              last_heartbeat_at: "2024-01-05T10:00:00Z",
+            }],
+          });
+        }
+        return mockResponse(200, { data: {
+          total_seconds: 9000,
+          human_readable_total: "2 hrs 30 mins",
+          languages: [
+            { name: "TypeScript", total_seconds: 9000, percent: 100 },
+          ],
+        } });
       }) as unknown as typeof fetch;
 
       const client = new WakaTimeClient("test-key");
@@ -308,8 +355,9 @@ describe("WakaTimeClient", () => {
       await client.getLast7DaysActivity();
       await client.getRecentProjectActivity();
       await client.getLast7DaysActivity();
+      await client.getRecentProjectActivity();
 
-      expect(fetchCount).toBe(1);
+      expect(fetchCount).toBe(2);
     });
 
     test("retries after a failed request (cache is not sticky)", async () => {

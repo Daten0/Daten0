@@ -24,6 +24,23 @@ function isGitHubRepoResponse(value: unknown): value is GitHubRepoResponse {
   );
 }
 
+function hasExpectedGitHubUrl(response: GitHubRepoResponse): boolean {
+  try {
+    const url = new URL(response.html_url);
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "github.com" &&
+      url.username === "" &&
+      url.password === "" &&
+      url.search === "" &&
+      url.hash === "" &&
+      url.pathname.replace(/\/$/, "") === `/${response.full_name}`
+    );
+  } catch {
+    return false;
+  }
+}
+
 function isGitHubLanguagesResponse(
   value: unknown,
 ): value is GitHubLanguagesResponse {
@@ -95,7 +112,7 @@ export class GitHubClient {
     }
 
     const body = await this.readJson(response);
-    if (!isGitHubRepoResponse(body)) {
+    if (!isGitHubRepoResponse(body) || !hasExpectedGitHubUrl(body)) {
       throw new Error("GitHub response did not match expected schema");
     }
 

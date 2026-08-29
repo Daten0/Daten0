@@ -61,12 +61,12 @@ export class ReadmeRenderer {
     const languages = summary.languages
       .map(
         (language) =>
-          `- **${language.name}** — ${language.percentage.toFixed(1)}%`,
+          `- **${escapeMarkdownText(language.name)}** — ${language.percentage.toFixed(1)}%`,
       )
       .join("\n");
 
     return [
-      `**Last 7 Days:** ${summary.text}`,
+      `**Last 7 Days:** ${escapeMarkdownText(summary.text)}`,
       "",
       languages,
     ].join("\n");
@@ -78,11 +78,11 @@ export class ReadmeRenderer {
     }
 
     const label = project.repository
-      ? `[**${project.name}**](${project.repository.htmlUrl})`
-      : `**${project.name}**`;
+      ? `[**${escapeMarkdownText(project.name)}**](${project.repository.htmlUrl})`
+      : `**${escapeMarkdownText(project.name)}**`;
 
     const description = project.repository?.description
-      ? ` — ${project.repository.description}`
+      ? ` — ${escapeMarkdownText(project.repository.description)}`
       : "";
 
     return `- 🔭 I'm currently working on ${label}${description}`;
@@ -113,10 +113,26 @@ export class ReadmeRenderer {
 }
 
 function badge(name: string): string {
-  const color = colorFor(name);
-  const label = encodeURIComponent(name);
-  const alt = escapeHtmlAttribute(name);
+  const normalizedName = normalizeExternalText(name);
+  const color = colorFor(normalizedName);
+  const label = encodeURIComponent(normalizedName);
+  const alt = escapeHtmlAttribute(normalizedName);
   return `<img src="https://img.shields.io/badge/${label}-${color}?style=for-the-badge&logoColor=white" alt="${alt}" />`;
+}
+
+function escapeMarkdownText(value: string): string {
+  return normalizeExternalText(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/([\\`*_[\]()])/g, "\\$1");
+}
+
+function normalizeExternalText(value: string): string {
+  return value
+    .replace(/[\u0000-\u001F\u007F]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** Escapes a value for use inside a double-quoted HTML attribute. */

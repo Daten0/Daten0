@@ -128,6 +128,50 @@ describe("TechStackService", () => {
     expect(tsCount).toBe(1);
   });
 
+  test("does not reintroduce duplicates while filling remaining slots", async () => {
+    const github = new MockGitHubClient({
+      "owner/repo-a": ["TypeScript", "Go", "Rust", "YAML"],
+    });
+    const service = new TechStackService(
+      github,
+      new ManifestReader(new MemoryFs({})),
+    );
+
+    const result = await service.build({
+      wakatimeLanguages: makeWakatimeLanguages([
+        "TypeScript", "Rust", "Python",
+      ]),
+      recentProjects: [{ name: "project-a" }],
+      mapping: { "project-a": "owner/repo-a" },
+      localRepoPaths: [],
+    });
+
+    expect(result.languages.map((item) => item.name)).toEqual([
+      "TypeScript", "Rust", "Python", "Go", "YAML",
+    ]);
+  });
+
+  test("deduplicates language names case-insensitively", async () => {
+    const github = new MockGitHubClient({
+      "owner/repo-a": ["typescript", "Go"],
+    });
+    const service = new TechStackService(
+      github,
+      new ManifestReader(new MemoryFs({})),
+    );
+
+    const result = await service.build({
+      wakatimeLanguages: makeWakatimeLanguages(["TypeScript"]),
+      recentProjects: [{ name: "project-a" }],
+      mapping: { "project-a": "owner/repo-a" },
+      localRepoPaths: [],
+    });
+
+    expect(result.languages.map((item) => item.name)).toEqual([
+      "TypeScript", "Go",
+    ]);
+  });
+
   test("keeps GitHub languages even when WakaTime already fills the limit", async () => {
     const github = new MockGitHubClient({
       "owner/repo-a": ["Go", "Dockerfile"],
@@ -241,6 +285,28 @@ describe("TechStackService", () => {
     });
 
     expect(result.languages.map((l) => l.name)).toEqual(["TypeScript"]);
+  });
+
+  test("does not query malformed repository mappings", async () => {
+    const github = new MockGitHubClient();
+    let called = false;
+    github.getRepositoryLanguages = async () => {
+      called = true;
+      return ["TypeScript"];
+    };
+    const service = new TechStackService(
+      github,
+      new ManifestReader(new MemoryFs({})),
+    );
+
+    await service.build({
+      wakatimeLanguages: [],
+      recentProjects: [{ name: "project-a" }],
+      mapping: { "project-a": "owner/repo/extra" },
+      localRepoPaths: [],
+    });
+
+    expect(called).toBe(false);
   });
 
   test("gracefully handles manifest read failures", async () => {

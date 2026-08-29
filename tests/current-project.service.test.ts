@@ -1,23 +1,35 @@
 import { describe, expect, test } from "bun:test";
 
 import { GitHubClient } from "../src/clients/github.client";
-import { CurrentProjectService } from "../src/services/current-project.service";
+import {
+  CurrentProjectService,
+  filterRecentProjects,
+} from "../src/services/current-project.service";
 import type { ProjectActivity } from "../src/types/activity";
 
 function makeProject(
   name: string,
   lastHeartbeatAt: string,
-  totalSeconds = 1000,
 ): ProjectActivity {
   return {
     name,
-    totalSeconds,
-    percent: 50,
     lastHeartbeatAt,
   };
 }
 
 describe("CurrentProjectService", () => {
+  test("filterRecentProjects keeps only activity from the last seven days", () => {
+    const now = Date.parse("2024-01-08T00:00:00.000Z");
+    const projects = [
+      makeProject("inside", "2024-01-01T00:00:00.000Z"),
+      makeProject("too-old", "2023-12-31T23:59:59.999Z"),
+      makeProject("future", "2024-01-08T00:00:00.001Z"),
+    ];
+
+    expect(filterRecentProjects(projects, now).map((project) => project.name))
+      .toEqual(["inside"]);
+  });
+
   test("selectMostRecent returns null for empty list", () => {
     const service = new CurrentProjectService(new GitHubClient());
     expect(service.selectMostRecent([])).toBeNull();
@@ -77,15 +89,13 @@ describe("CurrentProjectService", () => {
     expect(result).toBeNull();
   });
 
-  test("build returns project without repository when no mapping entry", async () => {
+  test("build does not publish an unmapped project", async () => {
     const service = new CurrentProjectService(new GitHubClient());
     const projects = [makeProject("my-app", "2024-01-05T10:00:00.000Z")];
 
     const result = await service.build(projects, {});
 
-    expect(result).not.toBeNull();
-    expect(result?.name).toBe("my-app");
-    expect(result?.repository).toBeNull();
+    expect(result).toBeNull();
   });
 
   test("build attaches GitHub repo when mapping matches and API succeeds", async () => {
@@ -139,7 +149,7 @@ describe("CurrentProjectService", () => {
     }
   });
 
-  test("build ignores mapping entries that don't match any project", async () => {
+  test("build returns null when mappings do not match activity", async () => {
     const service = new CurrentProjectService(new GitHubClient());
     const projects = [makeProject("my-app", "2024-01-05T10:00:00.000Z")];
 
@@ -147,8 +157,7 @@ describe("CurrentProjectService", () => {
       "different-project": "me/different-project",
     });
 
-    expect(result?.name).toBe("my-app");
-    expect(result?.repository).toBeNull();
+    expect(result).toBeNull();
   });
 
   test("build ignores malformed mapping entries", async () => {
@@ -166,7 +175,38 @@ describe("CurrentProjectService", () => {
       const result = await service.build(projects, { "my-app": "not-a-slug" });
 
       expect(called).toBe(0);
-      expect(result?.repository).toBeNull();
+      expect(result).toBeNull();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("build skips a newer unmapped project", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          full_name: "me/public-app",
+          html_url: "https://github.com/me/public-app",
+          description: null,
+          language: "TypeScript",
+          stargazers_count: 0,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      )) as unknown as typeof fetch;
+
+    try {
+      const service = new CurrentProjectService(new GitHubClient());
+      const projects = [
+        makeProject("private-client", "2024-01-06T10:00:00.000Z"),
+        makeProject("public-app", "2024-01-05T10:00:00.000Z"),
+      ];
+
+      const result = await service.build(projects, {
+        "public-app": "me/public-app",
+      });
+
+      expect(result?.name).toBe("public-app");
     } finally {
       globalThis.fetch = originalFetch;
     }
